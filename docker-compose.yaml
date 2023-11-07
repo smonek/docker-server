@@ -22,6 +22,7 @@ services:
       ##$(cat .secret | xargs)
       ##/run/secrets/db_uri  'mysql+pymysql://root:example@db/flask'
       SQLALCHEMY_DATABASE_URI: 'mysql+pymysql://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}/${DB_NAME}'
+    restart: always
 
 
   db:
@@ -32,6 +33,7 @@ services:
       - MARIADB_ROOT_PASSWORD=${DB_PASSWORD}
     ##flask
       - MARIADB_DATABASE=${DB_NAME}
+    restart: always
 
   adminer:
     image: adminer
