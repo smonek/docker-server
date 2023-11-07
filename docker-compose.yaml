@@ -1,0 +1,59 @@
+version: '3.1'
+
+#https://stackoverflow.com/questions/65869838/how-to-move-passwords-away-from-docker-compose-yml
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile-flask
+    volumes:
+      - type: bind
+        source: app/static
+        target: /app/static
+      - "./:/app:z"
+      - "/etc/localtime:/etc/localtime:ro"
+    command: gunicorn run:app --bind 0.0.0.0:8000
+    depends_on:
+      - db
+    ports:
+      - 8000:8000
+    environment:
+      ##$(cat .secret | xargs)
+      ##/run/secrets/db_uri  'mysql+pymysql://root:example@db/flask'
+      SQLALCHEMY_DATABASE_URI: 'mysql+pymysql://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}/${DB_NAME}'
+
+
+  db:
+    image: mariadb
+##     restart: always
+    environment:
+    ##example
+      - MARIADB_ROOT_PASSWORD=${DB_PASSWORD}
+    ##flask
+      - MARIADB_DATABASE=${DB_NAME}
+
+  adminer:
+    image: adminer
+##     restart: always
+    ports:
+      - 5000:5000
+
+  nginx:
+    image: webapp-nginx
+    build:
+      context: .
+      dockerfile: Dockerfile-nginx
+    ports:
+      - 8888:80
+    depends_on:
+      - app
+    volumes:
+      - type: bind
+        source: app/static
+        target: /home/app/web/staticfiles
+    cpus: "0.5"
+    mem_reservation: "10M"
+    mem_limit: "250M"
+volumes:
+  static_volume:
